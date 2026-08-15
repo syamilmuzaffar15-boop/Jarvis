@@ -391,8 +391,13 @@
             }
             else if (p.includes('buka youtube')) {
                 let q = pesan.replace(/buka youtube/i, '').trim();
-                window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(q), '_blank');
-                jawaban = "Membuka YouTube di tab baru, Tuan.";
+                let urlTarget = q ? "https://www.youtube.com/results?search_query=" + encodeURIComponent(q) : "https://www.youtube.com";
+                window.open(urlTarget, '_blank');
+                jawaban = q ? "Membuka hasil pencarian YouTube untuk " + q : "Membuka YouTube, Tuan.";
+            }
+            else if (p.includes('buka google')) {
+                window.open("https://www.google.com", '_blank');
+                jawaban = "Membuka Google, Tuan.";
             }
             else if (p.startsWith('cari ') || p.startsWith('buka ')) {
                 let q = pesan.replace(/^(cari|buka)\s+/i, '');
@@ -405,12 +410,11 @@
                 jawaban = "Sistem pendengaran dimatikan.";
             }
             else {
-                // SEMUA PERTANYAAN LAIN OTOMATIS KE GOOGLE DI TAB BARU (TIDAK ADA LAGI IFRAME ERROR)
                 window.open("https://www.google.com/search?q=" + encodeURIComponent(pesan), '_blank');
-                jawaban = "Mencari informasi tentang " + pesan;
+                jawaban = "Mencari " + pesan + " di Google, Tuan.";
             }
 
-            // Eksekusi Cepat
+            // Eksekusi Cepat ke Tab Baru Tanpa Error Iframe
             setTimeout(() => {
                 responseBox.innerText = jawaban;
                 bicara(jawaban);
