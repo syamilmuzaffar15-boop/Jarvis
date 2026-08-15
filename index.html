@@ -298,18 +298,19 @@
             isSpeaking = true;
             
             const utterThis = new SpeechSynthesisUtterance(teks);
-            let selectedVoice = voices.find(v => v.lang.includes('id-ID'));
+            let selectedVoice = voices.find(v => v.lang.includes('id-ID') || v.lang.includes('id_ID'));
             if (selectedVoice) { utterThis.voice = selectedVoice; }
             
-            utterThis.rate = 0.8; 
-            utterThis.pitch = 1.0; 
+            utterThis.lang = 'id-ID';
+            utterThis.rate = 0.85; 
+            utterThis.pitch = 0.9; 
             
             utterThis.onstart = () => jarvisFace.classList.add('speaking');
             utterThis.onend = () => {
                 jarvisFace.classList.remove('speaking');
                 isSpeaking = false;
                 if (callback) callback();
-                if (isAutoListening) { setTimeout(jalankanPendengaran, 400); }
+                if (isAutoListening) { setTimeout(jalankanPendengaran, 300); }
             };
             synth.speak(utterThis);
         }
@@ -317,15 +318,31 @@
         function aktifkanModeSuara() {
             if (isAutoListening) return;
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) { alert('Browser tidak mendukung.'); return; }
-            recognition = new SpeechRecognition();
-            recognition.lang = 'id-ID';
-            recognition.onresult = (event) => {
-                const hasil = event.results[0][0].transcript;
-                statusText.innerText = "Mendengar: " + hasil;
-                prosesPintar(hasil);
-            };
+            if (!SpeechRecognition) { alert('Browser tidak mendukung pengenalan suara.'); return; }
+            
+            if (!recognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'id-ID';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = (event) => {
+                    const hasil = event.results[0][0].transcript;
+                    statusText.innerText = "Mendengar: " + hasil;
+                    prosesPintar(hasil);
+                };
+
+                recognition.onerror = () => {
+                    if (isAutoListening && !isSpeaking) { setTimeout(jalankanPendengaran, 500); }
+                };
+
+                recognition.onend = () => {
+                    if (isAutoListening && !isSpeaking) { setTimeout(jalankanPendengaran, 300); }
+                };
+            }
+
             isAutoListening = true;
+            statusText.innerText = "Sistem Aktif. Silakan bicara...";
             bicara("Mode suara otomatis diaktifkan, Tuan Samil.", () => jalankanPendengaran());
         }
 
@@ -337,9 +354,9 @@
         function tutupPopup() {
             appPopup.style.display = 'none';
             popupFrame.src = '';
-            // Hapus elemen kamera jika ada
             const v = document.getElementById('kameraView');
             if(v) v.remove();
+            bicara("Jendela aplikasi telah ditutup, Tuan.");
         }
 
         function prosesPintar(pesan) {
@@ -354,43 +371,61 @@
             }
 
             if (p.includes('buka kamera')) {
-                jawaban = "Membuka kamera, Tuan.";
+                jawaban = "Membuka kamera sistem, Tuan.";
                 appPopup.style.display = 'flex';
-                popupTitle.innerText = "Kamera";
+                popupTitle.innerText = "Kamera Sistem";
                 popupFrame.style.display = "none";
                 const video = document.createElement('video');
                 video.id = "kameraView";
                 video.autoplay = true;
                 video.style.width = "100%";
+                video.style.height = "100%";
                 appPopup.appendChild(video);
-                navigator.mediaDevices.getUserMedia({video: true}).then(s => video.srcObject = s);
+                navigator.mediaDevices.getUserMedia({video: true}).then(s => video.srcObject = s).catch(() => {});
             } 
-            else if (p.includes('siapa kamu')) { jawaban = "Saya Jarvis, asisten AI Anda."; }
-            else if (p.includes('jam berapa')) { jawaban = "Sekarang jam " + new Date().toLocaleTimeString(); }
-            else if (p.startsWith('buka youtube')) {
-                let q = pesan.replace(/buka youtube/i, '');
+            else if (p.includes('siapa kamu')) { 
+                jawaban = "Saya Jarvis, asisten AI pribadi Anda, Tuan Samil."; 
+            }
+            else if (p.includes('jam berapa')) { 
+                jawaban = "Sekarang jam " + new Date().toLocaleTimeString(); 
+            }
+            else if (p.includes('buka youtube')) {
+                let q = pesan.replace(/buka youtube/i, '').trim();
                 targetUrl = "https://m.youtube.com/results?search_query=" + encodeURIComponent(q);
                 namaApp = "YouTube";
+                jawaban = "Membuka YouTube untuk Anda, Tuan.";
             }
             else if (p.startsWith('cari ') || p.startsWith('buka ')) {
                 let q = pesan.replace(/^(cari|buka)\s+/i, '');
                 targetUrl = "https://www.google.com/search?q=" + encodeURIComponent(q);
                 namaApp = "Google: " + q;
+                jawaban = "Mencari " + q + " di Google.";
             }
             else if (p.includes('stop') || p.includes('berhenti')) {
                 isAutoListening = false;
-                jawaban = "Sistem dimatikan.";
+                if (recognition) { try { recognition.stop(); } catch(e) {} }
+                jawaban = "Sistem pendengaran dimatikan.";
+            }
+            else {
+                targetUrl = "https://www.google.com/search?q=" + encodeURIComponent(pesan);
+                namaApp = "Pencarian Google";
+                jawaban = "Mencari informasi tentang " + pesan;
             }
 
+            // Eksekusi Cepat: Web Langsung Terbuka Seketika
             setTimeout(() => {
                 responseBox.innerText = jawaban;
-                bicara(jawaban, () => {
-                    if (targetUrl) {
-                        popupTitle.innerText = namaApp;
-                        popupFrame.src = targetUrl;
-                        appPopup.style.display = 'flex';
-                    }
-                });
+                
+                if (targetUrl) {
+                    const v = document.getElementById('kameraView');
+                    if(v) v.remove();
+                    popupFrame.style.display = "block";
+                    popupTitle.innerText = namaApp;
+                    popupFrame.src = targetUrl;
+                    appPopup.style.display = 'flex';
+                }
+
+                bicara(jawaban);
             }, 50);
         }
     </script>
