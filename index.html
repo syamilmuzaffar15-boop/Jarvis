@@ -363,7 +363,7 @@
             statusText.innerText = "Menganalisis...";
             responseBox.innerText = pesan;
             const p = pesan.toLowerCase();
-            let jawaban = "", targetUrl = "", namaApp = "";
+            let jawaban = "", targetUrl = "", namaApp = "", openNewTab = false;
 
             if (p.includes('tutup') || p.includes('kembali')) {
                 tutupPopup();
@@ -394,12 +394,14 @@
                 targetUrl = "https://m.youtube.com/results?search_query=" + encodeURIComponent(q);
                 namaApp = "YouTube";
                 jawaban = "Membuka YouTube untuk Anda, Tuan.";
+                openNewTab = true; // YouTube mobile lebih aman dibuka tab baru agar tidak error kerangka
             }
             else if (p.startsWith('cari ') || p.startsWith('buka ')) {
                 let q = pesan.replace(/^(cari|buka)\s+/i, '');
-                targetUrl = "https://www.google.com/search?q=" + encodeURIComponent(q);
-                namaApp = "Google: " + q;
-                jawaban = "Mencari " + q + " di Google.";
+                // Menggunakan DuckDuckGo di dalam iframe agar tidak error seperti Google
+                targetUrl = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(q);
+                namaApp = "Pencarian: " + q;
+                jawaban = "Mencari " + q + " untuk Anda, Tuan.";
             }
             else if (p.includes('stop') || p.includes('berhenti')) {
                 isAutoListening = false;
@@ -407,22 +409,26 @@
                 jawaban = "Sistem pendengaran dimatikan.";
             }
             else {
-                targetUrl = "https://www.google.com/search?q=" + encodeURIComponent(pesan);
-                namaApp = "Pencarian Google";
+                targetUrl = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(pesan);
+                namaApp = "Pencarian: " + pesan;
                 jawaban = "Mencari informasi tentang " + pesan;
             }
 
-            // Eksekusi Cepat: Web Langsung Terbuka Seketika
+            // Eksekusi Cepat
             setTimeout(() => {
                 responseBox.innerText = jawaban;
                 
                 if (targetUrl) {
-                    const v = document.getElementById('kameraView');
-                    if(v) v.remove();
-                    popupFrame.style.display = "block";
-                    popupTitle.innerText = namaApp;
-                    popupFrame.src = targetUrl;
-                    appPopup.style.display = 'flex';
+                    if (openNewTab) {
+                        window.open(targetUrl, '_blank');
+                    } else {
+                        const v = document.getElementById('kameraView');
+                        if(v) v.remove();
+                        popupFrame.style.display = "block";
+                        popupTitle.innerText = namaApp;
+                        popupFrame.src = targetUrl;
+                        appPopup.style.display = 'flex';
+                    }
                 }
 
                 bicara(jawaban);
