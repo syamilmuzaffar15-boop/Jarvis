@@ -389,20 +389,22 @@
             else if (p.includes('jam berapa')) { 
                 jawaban = "Sekarang jam " + new Date().toLocaleTimeString(); 
             }
-            else if (p.includes('buka youtube')) {
-                let q = pesan.replace(/buka youtube/i, '').trim();
-                let urlTarget = q ? "https://www.youtube.com/results?search_query=" + encodeURIComponent(q) : "https://www.youtube.com";
-                window.open(urlTarget, '_blank');
-                jawaban = q ? "Membuka hasil pencarian YouTube untuk " + q : "Membuka YouTube, Tuan.";
+            // Kalkulator / Matematika otomatis langsung dijawab di layar
+            else if (/^[\d\s\+\-\*\/\(\)]+$/.test(p.replace(/berapa/g, '').replace(/hasil dari/g, '').trim())) {
+                try {
+                    let bersih = p.replace(/berapa/g, '').replace(/hasil dari/g, '').trim();
+                    let hasilMath = eval(bersih);
+                    jawaban = "Hasilnya adalah " + hasilMath;
+                } catch(e) {
+                    jawaban = "Maaf Tuan, saya tidak bisa menghitung rumus tersebut.";
+                }
             }
-            else if (p.includes('buka google')) {
-                window.open("https://www.google.com", '_blank');
-                jawaban = "Membuka Google, Tuan.";
+            // Perintah umum yang dijawab langsung tanpa pindah tab
+            else if (p.includes('terima kasih') || p.includes('thanks')) {
+                jawaban = "Sama-sama, Tuan Samil.";
             }
-            else if (p.startsWith('cari ') || p.startsWith('buka ')) {
-                let q = pesan.replace(/^(cari|buka)\s+/i, '');
-                window.open("https://www.google.com/search?q=" + encodeURIComponent(q), '_blank');
-                jawaban = "Mencari " + q + " di Google, Tuan.";
+            else if (p.includes('halo') || p.includes('hai')) {
+                jawaban = "Halo Tuan Samil, ada yang bisa saya bantu?";
             }
             else if (p.includes('stop') || p.includes('berhenti')) {
                 isAutoListening = false;
@@ -410,11 +412,10 @@
                 jawaban = "Sistem pendengaran dimatikan.";
             }
             else {
-                window.open("https://www.google.com/search?q=" + encodeURIComponent(pesan), '_blank');
-                jawaban = "Mencari " + pesan + " di Google, Tuan.";
+                // Jawaban cerdas bawaan jika bertanya sesuatu, tetap di halaman Jarvis
+                jawaban = "Pertanyaan bagus, Tuan. Namun saat ini saya fokus melayani sistem Anda di sini.";
             }
 
-            // Eksekusi Cepat ke Tab Baru Tanpa Error Iframe
             setTimeout(() => {
                 responseBox.innerText = jawaban;
                 bicara(jawaban);
