@@ -363,7 +363,7 @@
             statusText.innerText = "Menganalisis...";
             responseBox.innerText = pesan;
             const p = pesan.toLowerCase();
-            let jawaban = "", targetUrl = "", namaApp = "", openNewTab = false;
+            let jawaban = "";
 
             if (p.includes('tutup') || p.includes('kembali')) {
                 tutupPopup();
@@ -391,17 +391,13 @@
             }
             else if (p.includes('buka youtube')) {
                 let q = pesan.replace(/buka youtube/i, '').trim();
-                targetUrl = "https://m.youtube.com/results?search_query=" + encodeURIComponent(q);
-                namaApp = "YouTube";
-                jawaban = "Membuka YouTube untuk Anda, Tuan.";
-                openNewTab = true; // YouTube mobile lebih aman dibuka tab baru agar tidak error kerangka
+                window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(q), '_blank');
+                jawaban = "Membuka YouTube di tab baru, Tuan.";
             }
             else if (p.startsWith('cari ') || p.startsWith('buka ')) {
                 let q = pesan.replace(/^(cari|buka)\s+/i, '');
-                // Menggunakan DuckDuckGo di dalam iframe agar tidak error seperti Google
-                targetUrl = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(q);
-                namaApp = "Pencarian: " + q;
-                jawaban = "Mencari " + q + " untuk Anda, Tuan.";
+                window.open("https://www.google.com/search?q=" + encodeURIComponent(q), '_blank');
+                jawaban = "Mencari " + q + " di Google, Tuan.";
             }
             else if (p.includes('stop') || p.includes('berhenti')) {
                 isAutoListening = false;
@@ -409,28 +405,14 @@
                 jawaban = "Sistem pendengaran dimatikan.";
             }
             else {
-                targetUrl = "https://lite.duckduckgo.com/lite/?q=" + encodeURIComponent(pesan);
-                namaApp = "Pencarian: " + pesan;
+                // SEMUA PERTANYAAN LAIN OTOMATIS KE GOOGLE DI TAB BARU (TIDAK ADA LAGI IFRAME ERROR)
+                window.open("https://www.google.com/search?q=" + encodeURIComponent(pesan), '_blank');
                 jawaban = "Mencari informasi tentang " + pesan;
             }
 
             // Eksekusi Cepat
             setTimeout(() => {
                 responseBox.innerText = jawaban;
-                
-                if (targetUrl) {
-                    if (openNewTab) {
-                        window.open(targetUrl, '_blank');
-                    } else {
-                        const v = document.getElementById('kameraView');
-                        if(v) v.remove();
-                        popupFrame.style.display = "block";
-                        popupTitle.innerText = namaApp;
-                        popupFrame.src = targetUrl;
-                        appPopup.style.display = 'flex';
-                    }
-                }
-
                 bicara(jawaban);
             }, 50);
         }
