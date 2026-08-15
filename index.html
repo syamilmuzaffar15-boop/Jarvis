@@ -143,8 +143,8 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
-            max-width: 550px;
-            height: 60vh;
+            max-width: 650px;
+            height: 65vh;
             background: rgba(1, 15, 5, 0.95);
             border: 2px solid #00ff66;
             border-radius: 12px;
@@ -389,22 +389,33 @@
             else if (p.includes('jam berapa')) { 
                 jawaban = "Sekarang jam " + new Date().toLocaleTimeString(); 
             }
-            // Kalkulator / Matematika otomatis langsung dijawab di layar
+            // Perhitungan Matematika Otomatis
             else if (/^[\d\s\+\-\*\/\(\)]+$/.test(p.replace(/berapa/g, '').replace(/hasil dari/g, '').trim())) {
                 try {
                     let bersih = p.replace(/berapa/g, '').replace(/hasil dari/g, '').trim();
                     let hasilMath = eval(bersih);
-                    jawaban = "Hasilnya adalah " + hasilMath;
+                    jawaban = "Hasil dari " + bersih + " adalah " + hasilMath;
                 } catch(e) {
                     jawaban = "Maaf Tuan, saya tidak bisa menghitung rumus tersebut.";
                 }
             }
-            // Perintah umum yang dijawab langsung tanpa pindah tab
-            else if (p.includes('terima kasih') || p.includes('thanks')) {
-                jawaban = "Sama-sama, Tuan Samil.";
+            // Perintah Buka Google atau Cari Sesuatu (Ditampilkan di Popup Tanpa Pindah Tab)
+            else if (p.includes('buka google')) {
+                appPopup.style.display = 'flex';
+                popupTitle.innerText = "Google Browser";
+                popupFrame.style.display = "block";
+                const v = document.getElementById('kameraView'); if(v) v.remove();
+                popupFrame.src = "https://www.bing.com"; // Menggunakan Bing agar bisa tampil di iframe tanpa diblokir Google
+                jawaban = "Membuka Google di jendela sistem, Tuan.";
             }
-            else if (p.includes('halo') || p.includes('hai')) {
-                jawaban = "Halo Tuan Samil, ada yang bisa saya bantu?";
+            else if (p.startsWith('cari ') || p.startsWith('buka ')) {
+                let q = pesan.replace(/^(cari|buka)\s+/i, '');
+                appPopup.style.display = 'flex';
+                popupTitle.innerText = "Pencarian: " + q;
+                popupFrame.style.display = "block";
+                const v = document.getElementById('kameraView'); if(v) v.remove();
+                popupFrame.src = "https://www.bing.com/search?q=" + encodeURIComponent(q);
+                jawaban = "Mencari " + q + " untuk Anda, Tuan.";
             }
             else if (p.includes('stop') || p.includes('berhenti')) {
                 isAutoListening = false;
@@ -412,8 +423,13 @@
                 jawaban = "Sistem pendengaran dimatikan.";
             }
             else {
-                // Jawaban cerdas bawaan jika bertanya sesuatu, tetap di halaman Jarvis
-                jawaban = "Pertanyaan bagus, Tuan. Namun saat ini saya fokus melayani sistem Anda di sini.";
+                // Pertanyaan umum lainnya akan langsung dibuka sebagai pencarian di jendela popup Jarvis
+                appPopup.style.display = 'flex';
+                popupTitle.innerText = "Pencarian Web";
+                popupFrame.style.display = "block";
+                const v = document.getElementById('kameraView'); if(v) v.remove();
+                popupFrame.src = "https://www.bing.com/search?q=" + encodeURIComponent(pesan);
+                jawaban = "Mencari " + pesan + " di sistem, Tuan.";
             }
 
             setTimeout(() => {
